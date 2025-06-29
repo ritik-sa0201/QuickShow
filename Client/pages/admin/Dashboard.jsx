@@ -10,9 +10,12 @@ import { dummyDashboardData } from "../../src/assets/assets";
 import Loading from "../../components/Loading";
 import Title from "../../components/admin/Title";
 import { dateFormaat } from "../../lib/dateFormat";
+import { useAppContext } from "../../src/context/AppContext";
+import toast from "react-hot-toast";
 
 function Dashboard() {
   const currency = import.meta.env.VITE_CURRENCY;
+  const { axios, getToken, user, image_baseURL } = useAppContext();
 
   const [dashboardData, setDashboardData] = useState({
     totalBookings: 0,
@@ -49,13 +52,28 @@ function Dashboard() {
   ];
 
   const fetchDashboardData = async () => {
-    setDashboardData(dummyDashboardData);
-    setLoading(false);
+    try {
+      const { data } = await axios.get("/api/admin/dashboard", {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      });
+
+      if (data.success && data.dashboardData != null) {
+        setDashboardData(data.dashboardData);
+      } else {
+        setDashboardData(dummyDashboardData);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch dashboard data");
+    } finally {
+      setLoading(false); // ensures it's always called
+    }
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
 
   return !loading ? (
     <>
@@ -90,7 +108,7 @@ function Dashboard() {
             className="w-55 rounded-lg overflow-hidden h-full pb-3 bg-primary/10 border border-primary/20 hover:-translate-y-1 transition duration-300"
           >
             <img
-              src={show.movie.poster_path}
+              src={image_baseURL + show.movie.poster_path}
               alt={show.movie.title || "Movie Poster"}
               className="h-60 w-full object-cover"
             />

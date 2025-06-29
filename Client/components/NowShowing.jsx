@@ -4,9 +4,11 @@ import MovieCard from "./MovieCard";
 import Button from "./Button";
 import BlurCircle from "./BlurCircle";
 import { assets, dummyShowsData } from "../src/assets/assets";
+import { useAppContext } from "../src/context/AppContext";
 
 function NowShowing() {
   const navigate = useNavigate();
+  const { shows } = useAppContext();
   return (
     <div
       className="min-h-screen w-screen px-20 py-15
@@ -26,7 +28,7 @@ function NowShowing() {
       </div>
 
       <div className="w-[80vw] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 ">
-        {dummyShowsData.slice(0, 4).map((show) => (
+        {shows.slice(0, 4).map((show) => (
           <MovieCard movie={show} key={show._id} />
         ))}
       </div>

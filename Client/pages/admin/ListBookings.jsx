@@ -3,24 +3,35 @@ import { dummyBookingData } from "../../src/assets/assets";
 import Loading from "../../components/Loading";
 import { dateFormaat } from "../../lib/dateFormat";
 import Title from "../../components/admin/Title";
+import { useAppContext } from "../../src/context/AppContext";
 
 function ListBookings() {
   const currency = import.meta.env.VITE_CURRENCY;
   const [bookings, setBookings] = useState([]);
   const [isLoading, setLoading] = useState(true);
+  const { axios, getToken, user } = useAppContext();
 
   const getAllbookings = async () => {
-    setBookings(dummyBookingData);
+    try {
+      const { data } = await axios.get("/api/admin/all-bookings", {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      });
+      setBookings(data.bookings || dummyBookingData);
+    } catch (error) {
+      console.log(error);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
-    getAllbookings();
-  }, []);
+    if (user) {
+      getAllbookings();
+    }
+  }, [user]);
 
   return !isLoading ? (
     <>
-      <Title text1="List" text2="Shows" />
+      <Title text1="List" text2="Bookings" />
 
       <div className="max-w-4xl mt-6 overflow-x-auto">
         <table className="w-full border-collapse rounded-md overflow-hidden whitespace-nowrap">

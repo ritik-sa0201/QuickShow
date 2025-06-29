@@ -12,11 +12,17 @@ import Dashboard from "../pages/admin/Dashboard";
 import ListShows from "../pages/admin/ListShows";
 import ListBookings from "../pages/admin/ListBookings";
 import AddShows from "../pages/admin/AddShows";
+import { useAppContext } from "./context/AppContext";
+import { SignIn } from "@clerk/clerk-react";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   const isAdmin = useLocation().pathname.startsWith("/admin");
+  const { user } = useAppContext();
+
   return (
     <>
+      <Toaster position="top-right" reverseOrder={false} />
       {!isAdmin && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
@@ -25,7 +31,18 @@ function App() {
         <Route path="/movie/:id/:date" element={<SeatLayout />} />
         <Route path="/faviourites" element={<Faviourite />} />
         <Route path="/mybookings" element={<MyBooking />} />
-        <Route path="/admin/*" element={<Layout />}>
+        <Route
+          path="/admin/*"
+          element={
+            user ? (
+              <Layout />
+            ) : (
+              <div className="flex justify-center items-center ">
+                <SignIn fallbackRedirectUrl={"/admin"} />
+              </div>
+            )
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="add-shows" element={<AddShows />} />
           <Route path="list-shows" element={<ListShows />} />

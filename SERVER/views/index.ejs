@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Show</title>
+  </head>
+  <body>
+    <button id="addShow" onclick="addShow()">Add Show</button>
+
+    <script>
+      function addShow() {
+        fetch("http://localhost:3000/api/show/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            movieId: "552524",
+            showsInput: [
+              {
+                date: "2025-06-05",
+                time: ["16:00", "18:00"],
+              },
+            ],
+            showPrice: 300,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    </script>
+  </body>
+</html>

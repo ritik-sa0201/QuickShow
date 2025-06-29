@@ -3,9 +3,11 @@ import Button from "./Button";
 import formatDate from "../lib/formatDate";
 import formatRunTime from "../lib/formatRuntime";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../src/context/AppContext";
 
 function MovieCard({ movie }) {
   const navigate = useNavigate();
+  const { image_baseURL } = useAppContext();
   return (
     <div
       className="flex flex-col flex-wrap p-3 rounded-2xl bg-slate-800 gap-4 h-[450px] w-[320px]
@@ -13,7 +15,7 @@ function MovieCard({ movie }) {
     "
     >
       <img
-        src={movie.poster_path}
+        src={image_baseURL + movie.poster_path}
         className="rounded-2xl h-[200px] object-cover object-center"
       />
       <h1 className="text-2xl font-medium">{movie.title}</h1>

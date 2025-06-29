@@ -4,6 +4,8 @@ import Title from "../../components/admin/Title";
 import Loading from "../../components/Loading";
 import { CheckIcon, DeleteIcon, StarIcon } from "lucide-react";
 import { kConverter } from "../../lib/kconvert";
+import { useAppContext } from "../../src/context/AppContext";
+import toast from "react-hot-toast";
 
 function AddShows() {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -12,9 +14,22 @@ function AddShows() {
   const [dateTimeSelection, setDateTimeSelection] = useState({});
   const [dateTimeInput, setDateTimeInput] = useState("");
   const [showPrice, setShowPrice] = useState("");
+  const [addingShow, setAddingShow] = useState(false);
+
+  const { axios, getToken, user, image_baseURL } = useAppContext();
 
   const fetchNowPlayingMovies = async () => {
-    setNowPlayingMovies(dummyShowsData);
+    try {
+      const { data } = await axios.get("/api/show/now-playing", {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      });
+
+      if (data.success) {
+        setNowPlayingMovies(data.movies);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch now playing movies");
+    }
   };
 
   const handleDateTimeAdd = () => {
@@ -51,8 +66,47 @@ function AddShows() {
   };
 
   useEffect(() => {
-    fetchNowPlayingMovies();
-  }, []); // ✅ added dependency array
+    if (user) {
+      fetchNowPlayingMovies();
+    }
+  }, [user]); // ✅ added dependency array
+
+  const handleSubmit = async () => {
+    try {
+      setAddingShow(true);
+      if (
+        !selectedMovie ||
+        Object.keys(dateTimeSelection).length === 0 ||
+        !showPrice
+      ) {
+        toast.error("Please fill all fields");
+      }
+      const showsInput = Object.entries(dateTimeSelection).map(
+        ([date, time]) => ({
+          date,
+          time,
+        })
+      );
+      const payload = {
+        movieId: selectedMovie,
+        showsInput,
+        showPrice: Number(showPrice),
+      };
+
+      const { data } = await axios.post("/api/show/add", payload, {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      });
+      if (data.succes) {
+        toast.success("Show added successfully");
+        setSelectedMovie(null);
+        setDateTimeSelection({});
+        setShowPrice("");
+      }
+    } catch (error) {
+      toast.error("Failed to add show");
+    }
+    setAddingShow(false);
+  };
 
   return nowPlayingMovies.length > 0 ? (
     <>
@@ -68,7 +122,7 @@ function AddShows() {
             >
               <div className="relative rounded-lg overflow-hidden">
                 <img
-                  src={movie.poster_path}
+                  src={image_baseURL + movie.poster_path}
                   className="w-full object-cover brightness-90"
                 />
                 <div className="text-sm flex items-center justify-between p-2 bg-black/70 w-full absolute bottom-0 left-0">
@@ -161,7 +215,11 @@ function AddShows() {
         </div>
       )}
 
-      <button className="bg-[var(--color-primary)] text-white px-8 py-2 mt-6 rounded hover:bg-[var(--color-primary)]/90 transition-all cursor-pointer">
+      <button
+        onClick={handleSubmit}
+        disabled={addingShow}
+        className="bg-[var(--color-primary)] text-white px-8 py-2 mt-6 rounded hover:bg-[var(--color-primary)]/90 transition-all cursor-pointer"
+      >
         Add Show
       </button>
     </>
