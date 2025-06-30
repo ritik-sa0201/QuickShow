@@ -5,15 +5,34 @@ import Show from "../models/Shows.js";
 
 const checkSeatsAvailability = async (showId, selectedSeats) => {
   try {
+    // ✅ Validate selectedSeats
+    if (!Array.isArray(selectedSeats) || selectedSeats.length === 0) {
+      console.log("selectedSeats is not a valid array:", selectedSeats);
+      return false;
+    }
+
     const showData = await Show.findById(showId);
     if (!showData) return false;
-    const occupiedSeats = showData.occupiedSeats;
 
-    const isAnySeatTaken = selectedSeats.some((seat) => occupiedSeats[seat]);
+    const occupiedSeats = showData.occupiedSeats || {};
+
+    // ✅ Check manually using a for-loop instead of .some
+    let isAnySeatTaken = false;
+
+    for (let seat of selectedSeats) {
+      if (
+        occupiedSeats[seat] === "1" ||
+        occupiedSeats[seat] === 1 ||
+        occupiedSeats[seat] === true
+      ) {
+        isAnySeatTaken = true;
+        break;
+      }
+    }
 
     return !isAnySeatTaken;
   } catch (error) {
-    console.log(error.message);
+    console.error("Seat availability error:", error.message);
     return false;
   }
 };
@@ -24,19 +43,21 @@ export const createBooking = async (req, res) => {
     const { showId, selectedSeats } = req.body;
     const { origin } = req.headers;
 
-    //check if seat is availabkel or not
-
-    const isAvailable = await checkSeatsAvailability(showId, selectedSeats);
+    // Check if the seat is available for the selected show
+    const isAvailable =
+      (await checkSeatsAvailability(showId, selectedSeats)) || [];
 
     if (!isAvailable) {
       return res.json({
         success: false,
-        message: "Selected seats are not available",
+        message: "Selected Seats are not available.",
       });
     }
 
+    // Get the show details
     const showData = await Show.findById(showId).populate("movie");
 
+    // Create a new booking
     const booking = await Booking.create({
       user: userId,
       show: showId,
@@ -47,14 +68,17 @@ export const createBooking = async (req, res) => {
     selectedSeats.map((seat) => {
       showData.occupiedSeats[seat] = userId;
     });
-
     showData.markModified("occupiedSeats");
+
     await showData.save();
 
-    //stripe initialisation
-
-    res.json({ success: true, message: "booked successuflly" });
+    // Stripe Gateway Initialize
+    res.json({
+      success: true,
+      message: "Booking created successfully.",
+    });
   } catch (error) {
+    console.log(error.message);
     res.json({ success: false, message: error.message });
   }
 };
@@ -63,9 +87,12 @@ export const getOccupiedSeats = async (req, res) => {
   try {
     const { showId } = req.params;
     const showData = await Show.findById(showId);
+
     const occupiedSeats = Object.keys(showData.occupiedSeats);
+
     res.json({ success: true, occupiedSeats });
   } catch (error) {
+    console.log(error.message);
     res.json({ success: false, message: error.message });
   }
 };

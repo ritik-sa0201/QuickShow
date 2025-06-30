@@ -11,6 +11,6 @@ userRouter.get("/bookings", getUserBookings);
 
 userRouter.post("/updatefavourite", updatefavourite);
 
-userRouter.get("/favourites", getFaviourites);
+userRouter.get("/favorites", getFaviourites);
 
 export default userRouter;

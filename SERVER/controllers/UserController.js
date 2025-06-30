@@ -23,23 +23,35 @@ export const updatefavourite = async (req, res) => {
   try {
     const { movieId } = req.body;
     const userId = req.auth().userId;
+
+    if (!movieId) {
+      return res
+        .status(400)
+        .json({ success: false, error: "A valid movie ID is required" });
+    }
+
     const user = await clerkClient.users.getUser(userId);
-    if (!user.privateMetadata.favourites) {
-      user.privateMetadata.favourites = [];
-    }
-    if (!user.privateMetadata.favourites.includes(movieId)) {
-      user.privateMetadata.favourites.push(movieId);
-    } else {
-      user.privateMetadata.favourites = user.privateMetadata.favourites.filter(
-        (item) => item != movieId
-      );
-    }
-    await clerkClient.users.updateUserMetadata(userId, {
-      privateMetadata: user.privateMetadata,
+    const favourites = user.privateMetadata.favourites || [];
+
+    const updatedFavourites = favourites.includes(movieId)
+      ? favourites.filter((item) => item !== movieId)
+      : [...favourites, movieId];
+
+    const updatedUser = await clerkClient.users.updateUserMetadata(userId, {
+      privateMetadata: {
+        ...user.privateMetadata,
+        favourites: updatedFavourites,
+      },
     });
-    res.json({ success: true, message: "fav updatedd succesfuly" });
+
+    res.json({
+      success: true,
+      message: "Favourite updated successfully",
+      updatedFavourites,
+    });
   } catch (error) {
-    res.json({ success: false, error: error.message });
+    console.error("Error updating favourites:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
